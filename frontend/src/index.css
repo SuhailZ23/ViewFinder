@@ -1,3 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
-    @tailwind components;
-    @tailwind utilities;
+@tailwind components;
+@tailwind utilities;
+
+/* Arabic Font Support */
+@layer base {
+  body {
+    @apply antialiased;
+    font-feature-settings: 'kern' 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Apply Baloo Bhaijaan globally for consistency */
+  * {
+    font-family: 'Baloo Bhaijaan 2', 'Arial', sans-serif;
+  }
+
+  /* Ensure proper RTL text rendering for Arabic */
+  [dir="rtl"], 
+  .rtl {
+    direction: rtl;
+  }
+}
+
+/* Custom scrollbar */
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-black;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/20 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/30;
+  }
+}
