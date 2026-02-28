@@ -295,6 +295,90 @@ async def analyze_image(file: UploadFile = File(...)):
     return {"results": results}
 
 
+@app.post("/analyze_multiple")
+async def analyze_multiple_images(files: list[UploadFile] = File(...)):
+    """
+    Receives MULTIPLE images -> Averages their feature vectors -> Returns better recommendations
+    This gives a richer "preference profile" than single image analysis
+    """
+    if not model:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    
+    if len(files) < 1:
+        raise HTTPException(status_code=400, detail="At least 1 image required")
+
+    print(f"📸 Analyzing {len(files)} images for preference profile...")
+
+    # 1. Extract features from all images
+    feature_vectors_batch = []
+    
+    for file in files:
+        try:
+            contents = await file.read()
+            img = Image.open(BytesIO(contents)).convert('RGB')
+            img = img.resize((224, 224))
+            
+            x = kimage.img_to_array(img)
+            x = np.expand_dims(x, axis=0)
+            x = preprocess_input(x)
+            
+            features = model.predict(x, verbose=0)
+            feature_vectors_batch.append(features.flatten())
+        except Exception as e:
+            print(f"⚠️  Error processing image: {e}")
+            continue
+    
+    if len(feature_vectors_batch) == 0:
+        raise HTTPException(status_code=400, detail="Could not process any images")
+    
+    # 2. AVERAGE the feature vectors to create a "preference profile"
+    avg_vector = np.mean(feature_vectors_batch, axis=0).reshape(1, -1)
+    print(f"✅ Created preference profile from {len(feature_vectors_batch)} images")
+
+    # 3. KNN lookup on the averaged vector
+    if knn is None:
+        return {"results": [
+            {"id": 0, "name": "Mock Mode", "similarity": 99, "matchType": "visual",
+             "matchReason": "No Data Loaded", "image": "https://via.placeholder.com/400"}
+        ]}
+
+    distances, indices = knn.kneighbors(avg_vector)
+
+    # 4. Build deduplicated results (get more results since we have richer context)
+    results = []
+    seen_names = set()
+
+    for i in range(len(indices[0])):
+        idx = indices[0][i]
+        dist = distances[0][i]
+        similarity = (1 - dist) * 100
+
+        name = labels[idx]
+        if name in seen_names:
+            continue
+        seen_names.add(name)
+
+        cat = get_category(name)
+        env = get_environment(name)
+        rel_path = os.path.relpath(image_paths[idx], IMAGES_PATH)
+
+        rec = {
+            "id": int(idx),
+            "name": name.replace("_", " "),
+            "similarity": round(similarity, 1),
+            "matchType": "visual",
+            "matchReason": f"{cat} | {env}",
+            "image": f"/static/{rel_path}"
+        }
+        results.append(rec)
+
+        # Return more results for multi-image analysis (6 instead of 4)
+        if len(results) >= 6:
+            break
+
+    return {"results": results}
+
+
 @app.get("/")
 def home():
     return {"message": "ViewFinder API is online."}
