@@ -9,27 +9,79 @@ const App = () => {
   const [allImages, setAllImages] = useState([]);
   const [fadingOut, setFadingOut] = useState(null); // Track which image is fading out
 
-  // Demo image pool (these will cycle as user clicks them)
-  const IMAGE_POOL = [
-    "https://images.unsplash.com/photo-1548013146-72479768bada?w=400&q=80", // Acropolis
-    "https://images.unsplash.com/photo-1548296404-93c7694b2f91?w=400&q=80", // Atomium
-    "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=400&q=80", // Arc de Triomphe
-    "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&q=80", // Big Ben
-    "https://images.unsplash.com/photo-1526725702345-bdda2b97ef73?w=400&q=80",
-    "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=400&q=60",
-    "https://images.unsplash.com/photo-1565060852924-764835d00f72?w=400&q=60",
-    "https://images.unsplash.com/photo-1597659840241-37e2b9c2f55f?w=400&q=60",
-    "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=60",
-    "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=60",
-    "https://images.unsplash.com/photo-1518558997970-4ddc236affcd?w=400&q=60",
-    "https://images.unsplash.com/photo-1599571343714-3d9646b97621?w=400&q=60",
+  // Background images for scrolling grid: 3 unique columns
+  // [X] Replace these placeholder URLs with your 20 hand-picked dataset images
+  // Format: "/api/static/Landmark_Name/image.jpg"
+  const BG_COL_1 = [
+    "/images/1.jpg",
+    "/images/2.jpg",
+    "/images/3.jpg",
+    "/images/4.jpg",
+    "/images/5.jpg",
+    "/images/6.jpg",
+    "/images/7.jpg",
+    "/images/8.jpg",
+  ];
+  
+  const BG_COL_2 = [
+    "/images/9.jpg",
+    "/images/10.jpg",
+    "/images/11.jpg",
+    "/images/12.jpg",
+    "/images/13.jpg",
+    "/images/14.jpg",
+    "/images/15.jpg",
+    "/images/16.jpg",
+  ];
+  
+  const BG_COL_3 = [
+    "/images/17.jpg",
+    "/images/18.jpg",
+    "/images/19.jpg",
+    "/images/20.jpg",
+    "/images/21.jpg",
+    "/images/22.jpg",
+    "/images/23.jpg",
+    "/images/24.jpg",
   ];
 
-  // Initialize with first 4 images
+  const BG_COLUMNS = [BG_COL_1, BG_COL_2, BG_COL_3];
+
+  // Fetch random demo images from backend on component mount
   useEffect(() => {
-    const shuffled = [...IMAGE_POOL].sort(() => 0.5 - Math.random());
-    setAllImages(shuffled);
-    setDemoImages(shuffled.slice(0, 4));
+    const fetchDemoImages = async () => {
+      try {
+        const response = await fetch('/api/random_images?count=12');
+        const data = await response.json();
+        
+        if (data.images && data.images.length > 0) {
+          // Images are already in correct format: "/images/1.jpg"
+          // NO need to prepend /api since they're served from frontend public folder
+          setAllImages(data.images);
+          setDemoImages(data.images.slice(0, 4));
+        } else {
+          // Fallback to placeholders if backend fails
+          console.warn("No images from backend, using placeholders");
+          useFallbackImages();
+        }
+      } catch (error) {
+        console.error("Error fetching demo images:", error);
+        useFallbackImages();
+      }
+    };
+
+    const useFallbackImages = () => {
+      const fallback = [
+        "/images/1.jpg",
+        "/images/2.jpg",
+        "/images/3.jpg",
+        "/images/4.jpg",
+      ];
+      setAllImages(fallback);
+      setDemoImages(fallback.slice(0, 4));
+    };
+
+    fetchDemoImages();
   }, []);
 
   // Handle file upload
@@ -106,13 +158,26 @@ const App = () => {
     setSelectedCount(newSelected.length);
 
     // Wait for fade animation, then replace image
+    // Wait for fade animation, then replace image
     setTimeout(() => {
-      const nextImageIndex = allImages.findIndex(img => !demoImages.includes(img));
-      if (nextImageIndex !== -1) {
-        const newDemos = [...demoImages];
-        newDemos[index] = allImages[nextImageIndex];
-        setDemoImages(newDemos);
-      }
+      setDemoImages(prevDemos => {
+        // 1. Find images from allImages that are NOT on screen AND NOT already selected
+        const availableImages = allImages.filter(
+          img => !prevDemos.includes(img) && !newSelected.includes(img)
+        );
+
+        if (availableImages.length > 0) {
+          // 2. Pick a RANDOM image from the fresh ones instead of just the first one
+          const randomIndex = Math.floor(Math.random() * availableImages.length);
+          const newDemos = [...prevDemos];
+          newDemos[index] = availableImages[randomIndex];
+          return newDemos;
+        }
+        
+        // Fallback in case we run out of images
+        return prevDemos; 
+      });
+      
       setFadingOut(null);
     }, 300); // Match CSS transition duration
 
@@ -123,58 +188,26 @@ const App = () => {
   };
 
   // Reset selection
-  const resetSelection = () => {
+  const resetSelection = async () => {
     setSelectedImages([]);
     setSelectedCount(0);
     setView('home');
     setFadingOut(null);
-    // Reshuffle demo images
-    const shuffled = [...IMAGE_POOL].sort(() => 0.5 - Math.random());
-    setAllImages(shuffled);
-    setDemoImages(shuffled.slice(0, 4));
+    
+    // Re-fetch new random images from backend
+    try {
+      const response = await fetch('/api/random_images?count=12');
+      const data = await response.json();
+      
+      if (data.images && data.images.length > 0) {
+        // Images are already in correct format, no need to modify
+        setAllImages(data.images);
+        setDemoImages(data.images.slice(0, 4));
+      }
+    } catch (error) {
+      console.error("Error re-fetching demo images:", error);
+    }
   };
-
-  // Background images for scrolling grid - 3 unique columns
-  const BG_COL_1 = [
-    "https://images.unsplash.com/photo-1548013146-72479768bada?w=400&q=60", // Acropolis
-    "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=400&q=60", // Eiffel
-    "https://images.unsplash.com/photo-1526725702345-bdda2b97ef73?w=400&q=60",
-    "https://images.unsplash.com/photo-1565060852924-764835d00f72?w=400&q=60",
-    "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=60",
-    "https://images.unsplash.com/photo-1506163356061-067982f64603?w=400&q=60",
-    "https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400&q=60",
-    "https://images.unsplash.com/photo-1555881604-6656e2731b55?w=400&q=60",
-    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=60",
-    "https://images.unsplash.com/photo-1520986606214-8b456906c813?w=400&q=60",
-  ];
-  
-  const BG_COL_2 = [
-    "https://images.unsplash.com/photo-1548296404-93c7694b2f91?w=400&q=60", // Atomium
-    "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&q=60", // Big Ben
-    "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=400&q=60",
-    "https://images.unsplash.com/photo-1597659840241-37e2b9c2f55f?w=400&q=60",
-    "https://images.unsplash.com/photo-1518558997970-4ddc236affcd?w=400&q=60",
-    "https://images.unsplash.com/photo-1568288591522-d748809e6c64?w=400&q=60",
-    "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=400&q=60",
-    "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&q=60",
-    "https://images.unsplash.com/photo-1549144511-f099e773c147?w=400&q=60",
-    "https://images.unsplash.com/photo-1524338198850-8a2ff63aaceb?w=400&q=60",
-  ];
-  
-  const BG_COL_3 = [
-    "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=400&q=60", // Arc de Triomphe
-    "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=60",
-    "https://images.unsplash.com/photo-1599571343714-3d9646b97621?w=400&q=60",
-    "https://images.unsplash.com/photo-1569098644584-210bcd375b59?w=400&q=60",
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&q=60",
-    "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&q=60",
-    "https://images.unsplash.com/photo-1558030006-450675393462?w=400&q=60",
-    "https://images.unsplash.com/photo-1564594143664-c5e2b0c6b570?w=400&q=60",
-    "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&q=60",
-    "https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=400&q=60",
-  ];
-
-  const BG_COLUMNS = [BG_COL_1, BG_COL_2, BG_COL_3];
 
   return (
     <div className="min-h-screen bg-black text-white font-sans relative overflow-hidden">
@@ -212,7 +245,7 @@ const App = () => {
 
       {/* OUTER WHITE BORDER FRAME */}
       <div className="fixed inset-0 pointer-events-none z-50">
-        <div className="absolute inset-0 border-2 border-white/1w0"></div>
+        <div className="absolute inset-0 border-2 border-white"></div>
       </div>
 
       {/* MAIN CONTENT */}
@@ -382,6 +415,13 @@ const App = () => {
               Your Perfect Matches
             </h2>
             <p className="text-white/60 mb-12 text-sm">
+
+
+
+
+
+
+          
               Based on your {selectedImages.length} selections, here are destinations we think you'll love:
             </p>
 
@@ -422,6 +462,8 @@ const App = () => {
   );
 };
 
+//--------------------------------------------------------------------------------
+// [] Design a logo
 // PLACEHOLDER: ViewFinder Logo SVG
 const LogoSVG = () => (
   <svg width="280" height="80" viewBox="0 0 280 80" fill="none" xmlns="http://www.w3.org/2000/svg">

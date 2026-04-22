@@ -379,6 +379,24 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
     return {"results": results}
 
 
+@app.get("/random_images")
+async def get_random_images(count: int = 12):
+    """
+    Return random images from the curated 50 images (1.jpg to 50.jpg)
+    One image per landmark for demo grid
+    """
+    import random
+    
+    # Your 50 curated images
+    all_images = [f"/images/{i}.jpg" for i in range(1, 51)]
+    
+    # Shuffle and pick 'count' random images
+    random.shuffle(all_images)
+    selected = all_images[:count]
+    
+    return {"images": selected}
+
+
 @app.get("/")
 def home():
     return {"message": "ViewFinder API is online."}
