@@ -47,41 +47,15 @@ const App = () => {
 
   const BG_COLUMNS = [BG_COL_1, BG_COL_2, BG_COL_3];
 
+  // AN array of 50 unique images
+  const handPickedImages = Array.from({ length: 50 }, (_, i) => `/images/${i + 1}.jpg`);
+
   // Fetch random demo images from backend on component mount
   useEffect(() => {
-    const fetchDemoImages = async () => {
-      try {
-        const response = await fetch('/api/random_images?count=12');
-        const data = await response.json();
-        
-        if (data.images && data.images.length > 0) {
-          // Images are already in correct format: "/images/1.jpg"
-          // NO need to prepend /api since they're served from frontend public folder
-          setAllImages(data.images);
-          setDemoImages(data.images.slice(0, 4));
-        } else {
-          // Fallback to placeholders if backend fails
-          console.warn("No images from backend, using placeholders");
-          useFallbackImages();
-        }
-      } catch (error) {
-        console.error("Error fetching demo images:", error);
-        useFallbackImages();
-      }
-    };
-
-    const useFallbackImages = () => {
-      const fallback = [
-        "/images/1.jpg",
-        "/images/2.jpg",
-        "/images/3.jpg",
-        "/images/4.jpg",
-      ];
-      setAllImages(fallback);
-      setDemoImages(fallback.slice(0, 4));
-    };
-
-    fetchDemoImages();
+    // Shuffle 50 images
+    const shuffled = [...handPickedImages].sort(() => 0.5 - Math.random());
+    setAllImages(shuffled);
+    setDemoImages(shuffled.slice(0, 4));
   }, []);
 
   // Handle file upload
@@ -89,9 +63,9 @@ const App = () => {
     if (!file) return;
 
     // Add to selected images array
-    const newSelected = [...selectedImages, file];
-    setSelectedImages(newSelected);
-    setSelectedCount(newSelected.length);
+    const uploadedImage = [file];
+    setSelectedImages(uploadedImage);
+    await analyzeMultipleImages(uploadedImage);
 
     // If we've collected 5 images, analyze them
     if (newSelected.length >= 5) {
@@ -245,7 +219,7 @@ const App = () => {
 
       {/* OUTER WHITE BORDER FRAME */}
       <div className="fixed inset-0 pointer-events-none z-50">
-        <div className="absolute inset-0 border-2 border-white"></div>
+        <div className="absolute inset-0 border-2 border-white/30"></div>
       </div>
 
       {/* MAIN CONTENT */}

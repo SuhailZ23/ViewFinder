@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',  // Required so Vite is accessible outside the Docker container
     port: 5173,
+    watch: {
+      usePolling: true,     // Using polling to detect file changes in Docker
+    },
     proxy: {
       // All /api/* requests get forwarded to the backend container
       // e.g. /api/analyze        → http://backend:8000/analyze
