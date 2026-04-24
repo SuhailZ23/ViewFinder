@@ -230,12 +230,12 @@ const App = () => {
           <div className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto">
             
             {/* LOGO */}
-            <div className="mb-12">
+            <div className="mb-4">
               <LogoSVG />
             </div>
 
             {/* UPLOAD AREA - Small Semi-transparent Box */}
-            <div className="w-full bg-white/[0.04] rounded-3xl p-8 mb-8 backdrop-blur-sm border border-white/10 flex justify-center items-center hover:bg-white/[0.1] transition-colors">
+            <div className="w-full bg-white/[0.04] rounded-3xl py-4 px-8 mb-4 backdrop-blur-sm border border-white/10 flex justify-center items-center hover:bg-white/[0.1] transition-colors">
               <div 
                 className="cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => document.getElementById('fileInput').click()}
@@ -252,7 +252,7 @@ const App = () => {
             </div>
 
             {/* ARABIC TEXT: "أو" (OR) */}
-            <div className="text-4xl font-bold mb-6">
+            <div className="text-4xl font-bold mb-4">
               أو
             </div>
 
