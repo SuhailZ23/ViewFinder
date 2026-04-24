@@ -4,7 +4,7 @@ ViewFinder is a Visual Recommendation Engine powered by Content-Based Image Retr
 
 I built this project out of a strong interest in Applied AI. My goal was to take an experimental computer vision model I originally created for a university AI course and transform it into a practical, user-facing product. By moving the model out of a standard Python notebook and wrapping it in a fully Dockerized, FastAPI and React ecosystem, as a jump from academic scripting to production-ready software engineering.
 
-![ViewFinder Demo](/frontend/public/demo-screenshot.png) *(Note: Add a screenshot of your UI here!)*
+![ViewFinder Demo](/frontend/public/ViewFinder_Screenshot.png)
 
 ## 🧠 How the AI Works
 
