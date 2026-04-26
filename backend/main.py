@@ -281,7 +281,7 @@ async def analyze_image(file: UploadFile = File(...)):
 
         rec = {
             "id": int(idx),
-            "name": name.replace("_", " "),
+            "name": str(name.replace("_", " ")),
             "similarity": round(similarity, 1),
             "matchType": "visual",
             "matchReason": f"{cat} | {env}",
@@ -377,24 +377,6 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
             break
 
     return {"results": results}
-
-
-@app.get("/random_images")
-async def get_random_images(count: int = 12):
-    """
-    Return random images from the curated 50 images (1.jpg to 50.jpg)
-    One image per landmark for demo grid
-    """
-    import random
-    
-    # Your 50 curated images
-    all_images = [f"/images/{i}.jpg" for i in range(1, 51)]
-    
-    # Shuffle and pick 'count' random images
-    random.shuffle(all_images)
-    selected = all_images[:count]
-    
-    return {"images": selected}
 
 
 @app.get("/")
