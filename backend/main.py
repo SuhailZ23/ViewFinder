@@ -282,7 +282,7 @@ async def analyze_image(file: UploadFile = File(...)):
         rec = {
             "id": int(idx),
             "name": str(name.replace("_", " ")),
-            "similarity": round(similarity, 1),
+            "similarity": round(float(similarity), 1),
             "matchType": "visual",
             "matchReason": f"{cat} | {env}",
             "image": f"/static/{rel_path}"   # ← now correctly resolves via the mounted route
@@ -365,7 +365,7 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
         rec = {
             "id": int(idx),
             "name": name.replace("_", " "),
-            "similarity": round(similarity, 1),
+            "similarity": round(float(similarity), 1),
             "matchType": "visual",
             "matchReason": f"{cat} | {env}",
             "image": f"/static/{rel_path}"

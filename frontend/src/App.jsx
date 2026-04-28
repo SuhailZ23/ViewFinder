@@ -66,11 +66,6 @@ const App = () => {
     const uploadedImage = [file];
     setSelectedImages(uploadedImage);
     await analyzeMultipleImages(uploadedImage);
-
-    // If we've collected 5 images, analyze them
-    if (newSelected.length >= 5) {
-      await analyzeMultipleImages(newSelected);
-    }
   };
 
   // Analyze multiple images
@@ -131,7 +126,6 @@ const App = () => {
     setSelectedImages(newSelected);
     setSelectedCount(newSelected.length);
 
-    // Wait for fade animation, then replace image
     // Wait for fade animation, then replace image
     setTimeout(() => {
       setDemoImages(prevDemos => {
