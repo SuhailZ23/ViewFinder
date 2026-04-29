@@ -373,7 +373,7 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
 
         # 2. The Semantic Thresholds: Translate math to human labels
         if raw_sim >= 78:
-            confidence_label = "Exceptional Match"
+            confidence_label = "Perfect Match"
         elif raw_sim >= 70:
             confidence_label = "Strong Match"
         elif raw_sim >= 62:
