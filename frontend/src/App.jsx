@@ -407,7 +407,7 @@ const App = () => {
                       alt={item.name}
                     />
                     <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold border border-[#FB7252]/30">
-                      {item.similarity}% Match
+                      {item.confidenceLabel}
                     </div>
                   </div>
                   <div className="p-6">

@@ -335,28 +335,51 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
     avg_vector = np.mean(feature_vectors_batch, axis=0).reshape(1, -1)
     print(f"✅ Created preference profile from {len(feature_vectors_batch)} images")
 
-    # 3. KNN lookup on the averaged vector
     if knn is None:
         return {"results": [
             {"id": 0, "name": "Mock Mode", "similarity": 99, "matchType": "visual",
              "matchReason": "No Data Loaded", "image": "https://via.placeholder.com/400"}
         ]}
 
+    # --- THE MATHEMATICAL BAN LIST ---
+    # Find the #1 closest DB match for EACH individual uploaded image to identify them
+    _, input_indices = knn.kneighbors(feature_vectors_batch, n_neighbors=1)
+    
+    # Create a set of the names the user inputted, so we can ban them from the output
+    banned_names = {labels[idx[0]] for idx in input_indices}
+    print(f"🚫 Banning inputs from results: {banned_names}")
+
+    # 3. KNN lookup on the averaged "preference profile"
     distances, indices = knn.kneighbors(avg_vector)
 
-    # 4. Build deduplicated results (get more results since we have richer context)
+    # 4. Build deduplicated results
     results = []
-    seen_names = set()
+    
+    # We initialize our 'seen' list with our 'banned' list. 
+    # This guarantees the inputs will be instantly skipped in the loop!
+    seen_names = set(banned_names) 
 
     for i in range(len(indices[0])):
         idx = indices[0][i]
         dist = distances[0][i]
-        similarity = (1 - dist) * 100
-
+        
         name = labels[idx]
         if name in seen_names:
             continue
         seen_names.add(name)
+
+        # 1. The Real Math: Keep it 100% mathematically accurate
+        raw_sim = (1 - dist) * 100
+
+        # 2. The Semantic Thresholds: Translate math to human labels
+        if raw_sim >= 78:
+            confidence_label = "Exceptional Match"
+        elif raw_sim >= 70:
+            confidence_label = "Strong Match"
+        elif raw_sim >= 62:
+            confidence_label = "Similar Vibe"
+        else:
+            confidence_label = "Thematic Match"
 
         cat = get_category(name)
         env = get_environment(name)
@@ -365,14 +388,14 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
         rec = {
             "id": int(idx),
             "name": name.replace("_", " "),
-            "similarity": round(float(similarity), 1),
+            "similarity": round(float(raw_sim), 1),     # Keep the real number for debugging if needed
+            "confidenceLabel": confidence_label,        # NEW: Pass the semantic label to React
             "matchType": "visual",
             "matchReason": f"{cat} | {env}",
             "image": f"/static/{rel_path}"
         }
         results.append(rec)
 
-        # Return more results for multi-image analysis (6 instead of 4)
         if len(results) >= 6:
             break
 
