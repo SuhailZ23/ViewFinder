@@ -8,6 +8,7 @@ const App = () => {
   const [demoImages, setDemoImages] = useState([]);
   const [allImages, setAllImages] = useState([]);
   const [fadingOut, setFadingOut] = useState(null); // Track which image is fading out
+  const [scanIndex, setScanIndex] = useState(0);    // NEW: Tracks which image is under the scanner
 
   // Background images for scrolling grid: 3 unique columns
   // [X] Replace these placeholder URLs with your 20 hand-picked dataset images
@@ -57,6 +58,20 @@ const App = () => {
     setAllImages(shuffled);
     setDemoImages(shuffled.slice(0, 4));
   }, []);
+
+  // NEW: Image swapping timer for the scanning animation
+  useEffect(() => {
+    let interval;
+    // Only run the timer if we are in scanning mode and have images
+    if (view === 'scanning' && selectedImages.length > 0) {
+      interval = setInterval(() => {
+        // Swap to the next image every 500ms
+        setScanIndex(prev => (prev + 1) % selectedImages.length);
+      }, 500); 
+    }
+    // Cleanup: Stop the timer if the view changes so it doesn't run forever
+    return () => clearInterval(interval);
+  }, [view, selectedImages]);
 
   // Handle file upload
   const handleUpload = async (file) => {
@@ -324,7 +339,7 @@ const App = () => {
             {/* Show all selected images in a grid */}
             <div className="mb-8">
               <p className="text-center text-white/60 mb-4 text-sm">
-                Analyzing your {selectedImages.length} selections...
+                Analyzing your preferences...
               </p>
               <div className="flex gap-2 justify-center">
                 {selectedImages.slice(0, 5).map((img, i) => (
@@ -340,21 +355,21 @@ const App = () => {
             </div>
 
             {/* Main scanning animation */}
-            <div className="relative w-72 h-72 rounded-2xl overflow-hidden border-2 border-[#FB7252]/50 shadow-[0_0_60px_rgba(251,114,82,0.4)]">
-              <div className="absolute inset-0 bg-[#FB7252]/5"></div>
-              <div className="absolute w-full h-1 bg-[#FB7252] shadow-[0_0_25px_#FB7252] animate-[scan_2.5s_ease-in-out_infinite]"></div>
+            <div className="relative w-72 h-72 rounded-2xl overflow-hidden border-2 border-[#FB7252]/50 shadow-[0_0_60px_rgba(251,114,82,0.4)] bg-black/50">
               
-              {/* Show grid of selected images inside */}
-              <div className="grid grid-cols-3 gap-1 p-4 opacity-30">
-                {selectedImages.slice(0, 9).map((img, i) => (
-                  <img 
-                    key={i}
-                    src={img instanceof File ? URL.createObjectURL(img) : img}
-                    className="w-full h-20 object-cover rounded grayscale"
-                    alt=""
-                  />
-                ))}
-              </div>
+              {/* THE DYNAMIC SWAPPING IMAGE */}
+              {selectedImages.length > 0 && (
+                <img 
+                  src={selectedImages[scanIndex] instanceof File ? URL.createObjectURL(selectedImages[scanIndex]) : selectedImages[scanIndex]} 
+                  className="absolute inset-0 w-full h-full object-cover grayscale opacity-50 transition-opacity duration-200"
+                  alt="Scanning target"
+                />
+              )}
+
+              {/* The Laser */}
+              <div className="absolute inset-0 bg-[#FB7252]/10 z-10 pointer-events-none"></div>
+              <div className="absolute w-full h-1 bg-[#FB7252] shadow-[0_0_25px_#FB7252] animate-[scan_2.5s_ease-in-out_infinite] z-20 pointer-events-none"></div>
+
             </div>
 
             <p className="mt-10 font-mono text-[#FB7252] text-sm animate-pulse tracking-widest">
@@ -371,34 +386,48 @@ const App = () => {
 
         {/* VIEW: RESULTS */}
         {view === 'results' && (
-          <div className="min-h-screen pt-24 px-6 md:px-12 max-w-6xl mx-auto">
-            <button 
-              onClick={resetSelection} 
-              className="mb-8 text-white/60 hover:text-white uppercase tracking-widest text-xs flex items-center gap-2 transition-colors"
-            >
-              ← START OVER
-            </button>
+          /* Reduced top padding (pt-4) to pull everything up! */
+          <div className="min-h-screen pt-4 md:pt-10 px-6 md:px-12 max-w-6xl mx-auto flex flex-col">
+            
+            {/* 1. BRANDING: Logo Centered */}
+            <div className="mb-4 flex justify-center opacity-90 pointer-events-none">
+              {/* scale-90 keeps it slightly smaller than the home page without making it tiny */}
+              <div className="scale-90">
+                <LogoSVG />
+              </div>
+            </div>
 
+            {/* 2. NAVIGATION: Back Button (Centered on mobile, left on desktop) */}
+            <div className="mb-8 flex justify-center md:justify-start">
+              <button 
+                onClick={resetSelection} 
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/20 text-white/80 hover:bg-white/10 hover:text-white uppercase tracking-widest text-sm font-bold transition-all duration-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Find Another Place
+              </button>
+            </div>
+
+            {/* 3. PAGE TITLE */}
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#FB7252]">
               Your Perfect Matches
             </h2>
-            <p className="text-white/60 mb-12 text-sm">
-
-
-
-
-
-
-          
-              Based on your {selectedImages.length} selections, here are destinations we think you'll love:
+            <p className="text-white/60 mb-10 text-sm">
+              Based on your preferences, you'll love these places:
             </p>
+
+            {/* RESULTS GRID ... (keep your existing results.map block here!) ... */}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
               {results.length > 0 ? results.map((item) => (
                 <div 
                   key={item.id} 
-                  className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#FB7252]/50 transition-all duration-500 group"
+                  // Reverted to the glassy background you originally liked!
+                  className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#FB7252]/50 transition-all duration-500 group flex flex-col"
                 >
+                  {/* 1. IMAGE SECTION */}
                   <div className="h-64 overflow-hidden relative">
                     <img 
                       src={item.image} 
@@ -406,15 +435,60 @@ const App = () => {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                       alt={item.name}
                     />
-                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold border border-[#FB7252]/30">
-                      {item.confidenceLabel}
-                    </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-1">{item.name}</h3>
-                    <p className="text-white/50 text-xs mb-4 uppercase tracking-widest">{item.matchType}</p>
-                    <div className="inline-block px-3 py-1.5 rounded-full border border-[#FB7252]/30 text-xs bg-[#FB7252]/10 text-[#FB7252]">
-                      {item.matchReason}
+
+                  {/* 2. INFO SECTION */}
+                  <div className="p-6 flex-grow flex flex-col justify-between">
+                    <h3 className="text-xl font-bold mb-4">{item.name}</h3>
+                    
+                    {/* mt-auto pushes this entire block to the bottom of the card */}
+                    <div className="mt-auto">
+                      
+                      <p className="text-white/60 text-[10px] mb-3 uppercase tracking-widest font-bold">
+                        Why it's a match:
+                      </p>
+                      
+                      {/* 
+                          RESPONSIVE LAYOUT: 
+                          Mobile -> flex-col (Stacked vertically)
+                          Desktop -> sm:flex-row sm:flex-nowrap (Side-by-side, locked in place) 
+                      */}
+                      <div className="flex flex-col sm:flex-row sm:flex-nowrap justify-between items-start sm:items-end gap-4 w-full">
+                        
+                        {/* LEFT COLUMN: TAGS */}
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto flex-grow">
+                          {item.matchReason
+                            .split(',')
+                            // NEW: Filter out "General" before rendering
+                            .filter(tag => tag.trim() !== 'General') 
+                            .map((tag, index) => (
+                              <span 
+                                key={index}
+                                className="flex items-center px-3 py-2 rounded-lg border border-[#FB7252]/40 text-[10px] uppercase font-bold tracking-wider bg-[#FB7252]/10 text-[#FB7252]"
+                              >
+                                {tag.replace(/_/g, ' ')}
+                              </span>
+                          ))}
+                        </div>
+
+                        {/* RIGHT COLUMN: GOOGLE MAPS BUTTON */}
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          /* 
+                             Mobile -> w-full (Big, easy-to-tap button at the bottom)
+                             Desktop -> sm:w-auto (Shrinks to fit content, locked to the right) 
+                          */
+                          className="w-full sm:w-auto shrink-0 whitespace-nowrap flex justify-center items-center gap-1.5 py-2 px-3 rounded-lg border border-white/20 text-xs font-bold text-white hover:bg-white hover:text-black transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                          </svg>
+                          Google Maps
+                        </a>
+
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -433,11 +507,12 @@ const App = () => {
 //--------------------------------------------------------------------------------
 // [] Design a logo
 // PLACEHOLDER: ViewFinder Logo SVG
+// UPDATE: Removed the 30px of invisible empty space at the bottom of the canvas
 const LogoSVG = () => (
-  <svg width="280" height="80" viewBox="0 0 280 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="280" height="50" viewBox="0 0 280 50" fill="none" xmlns="http://www.w3.org/2000/svg">
     <text 
       x="140" 
-      y="50" 
+      y="30" 
       fontFamily="'Baloo Bhaijaan 2', system-ui, sans-serif" 
       fontSize="48" 
       fontWeight="700" 

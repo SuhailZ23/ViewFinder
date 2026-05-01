@@ -12,7 +12,7 @@ import numpy as np
 import pickle
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles                     # ← ADDED
+from fastapi.staticfiles import StaticFiles
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from tensorflow.keras.preprocessing import image as kimage
 from tensorflow.keras.models import Model
@@ -24,13 +24,11 @@ from io import BytesIO
 # --- CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.join(BASE_DIR, "data")       # .npy / .pkl files live here
-IMAGES_PATH  = os.path.join(BASE_DIR, "datasets")   # actual image files live here
+IMAGES_PATH  = os.path.join(BASE_DIR, "datasets")   # actual image files are here
 
 app = FastAPI(title="ViewFinder API")
 
-# --- STATIC FILES (serves /static/* from the datasets folder) ---  ← ADDED
 # This is what lets the frontend actually display result images.
-# Make sure your "datasets" folder (with all landmark subfolders) is inside backend/
 if os.path.exists(IMAGES_PATH):
     app.mount("/static", StaticFiles(directory=IMAGES_PATH), name="static")
 else:
@@ -274,18 +272,15 @@ async def analyze_image(file: UploadFile = File(...)):
         cat = get_category(name)
         env = get_environment(name)
 
-        # ↓ FIXED: build a relative path that lines up with the StaticFiles mount
-        # image_paths[idx] is an absolute path like /app/datasets/Eiffel_Tower/img1.jpg
-        # We need                                        Eiffel_Tower/img1.jpg
         rel_path = os.path.relpath(image_paths[idx], IMAGES_PATH)
 
         rec = {
             "id": int(idx),
-            "name": str(name.replace("_", " ")),
+            "name": name.replace("_", " ").replace("Musee dOrsay", "Musée d'Orsay").replace("dOrsay", "d'Orsay"),
             "similarity": round(float(similarity), 1),
             "matchType": "visual",
-            "matchReason": f"{cat} | {env}",
-            "image": f"/static/{rel_path}"   # ← now correctly resolves via the mounted route
+            "matchReason": f"{cat},{env}",
+            "image": f"/static/{rel_path}"
         }
         results.append(rec)
 
@@ -341,11 +336,10 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
              "matchReason": "No Data Loaded", "image": "https://via.placeholder.com/400"}
         ]}
 
-    # --- THE MATHEMATICAL BAN LIST ---
-    # Find the #1 closest DB match for EACH individual uploaded image to identify them
+    # Find the #1 closest DB match for each selected image, and BAN those from the final results.
     _, input_indices = knn.kneighbors(feature_vectors_batch, n_neighbors=1)
     
-    # Create a set of the names the user inputted, so we can ban them from the output
+    # Create a set of the names the user inputted, to ban them from the output
     banned_names = {labels[idx[0]] for idx in input_indices}
     print(f"🚫 Banning inputs from results: {banned_names}")
 
@@ -355,8 +349,7 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
     # 4. Build deduplicated results
     results = []
     
-    # We initialize our 'seen' list with our 'banned' list. 
-    # This guarantees the inputs will be instantly skipped in the loop!
+    # Initialize 'seen' list with the 'banned' list. 
     seen_names = set(banned_names) 
 
     for i in range(len(indices[0])):
@@ -368,7 +361,7 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
             continue
         seen_names.add(name)
 
-        # 1. The Real Math: Keep it 100% mathematically accurate
+        # 1. Find the actual cosine similarity (0-100) instead of just the distance
         raw_sim = (1 - dist) * 100
 
         # 2. The Semantic Thresholds: Translate math to human labels
@@ -376,10 +369,8 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
             confidence_label = "Perfect Match"
         elif raw_sim >= 70:
             confidence_label = "Strong Match"
-        elif raw_sim >= 62:
-            confidence_label = "Similar Vibe"
         else:
-            confidence_label = "Thematic Match"
+            confidence_label = "Similar Vibe"
 
         cat = get_category(name)
         env = get_environment(name)
@@ -387,11 +378,11 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
 
         rec = {
             "id": int(idx),
-            "name": name.replace("_", " "),
-            "similarity": round(float(raw_sim), 1),     # Keep the real number for debugging if needed
-            "confidenceLabel": confidence_label,        # NEW: Pass the semantic label to React
+            "name": name.replace("_", " ").replace("Musee dOrsay", "Musée d'Orsay").replace("dOrsay", "d'Orsay"),
+            "similarity": round(float(raw_sim), 1),
+            "confidenceLabel": confidence_label,        #Pass the semantic label to React
             "matchType": "visual",
-            "matchReason": f"{cat} | {env}",
+            "matchReason": f"{cat},{env}",
             "image": f"/static/{rel_path}"
         }
         results.append(rec)
