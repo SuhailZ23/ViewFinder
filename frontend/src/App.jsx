@@ -8,11 +8,23 @@ const App = () => {
   const [demoImages, setDemoImages] = useState([]);
   const [allImages, setAllImages] = useState([]);
   const [fadingOut, setFadingOut] = useState(null); // Track which image is fading out
-  const [scanIndex, setScanIndex] = useState(0);    // NEW: Tracks which image is under the scanner
+  const [scanIndex, setScanIndex] = useState(0);    // Track which image is under the scanner
 
-  // Background images for scrolling grid: 3 unique columns
-  // [X] Replace these placeholder URLs with your 20 hand-picked dataset images
-  // Format: "/api/static/Landmark_Name/image.jpg"
+  // Arabic Translation Dictionary for Backend Tags
+  const arabicTags = {
+    "Engineering Marvels": "عجائب هندسية",
+    "Waterfront": "واجهة مائية",
+    "Palaces and Castles": "قصور وقلاع",
+    "Ancient Civilization": "حضارة قديمة",
+    "Modern Architecture": "عمارة حديثة",
+    "Monuments": "معالم أثرية",
+    "Urban": "طابع حضاري",
+    "Islamic Heritage": "تراث إسلامي",
+    "Christian Heritage": "تراث مسيحي",
+    "Hilltop": "على قمة تل"
+  };
+  
+  // Background images for scrolling grid: 3 unique columns with 8 images each (total 24 unique images)
   const BG_COL_1 = [
     "/images/1.jpg",
     "/images/2.jpg",
@@ -51,7 +63,7 @@ const App = () => {
   // AN array of 50 unique images
   const handPickedImages = Array.from({ length: 50 }, (_, i) => `/images/${i + 1}.jpg`);
 
-  // Fetch random demo images from backend on component mount
+  // Fetch random demo images from backend
   useEffect(() => {
     // Shuffle 50 images
     const shuffled = [...handPickedImages].sort(() => 0.5 - Math.random());
@@ -59,7 +71,7 @@ const App = () => {
     setDemoImages(shuffled.slice(0, 4));
   }, []);
 
-  // NEW: Image swapping timer for the scanning animation
+  // Image swapping timer for the scanning animation
   useEffect(() => {
     let interval;
     // Only run the timer if we are in scanning mode and have images
@@ -177,13 +189,12 @@ const App = () => {
     setView('home');
     setFadingOut(null);
     
-    // Re-fetch new random images from backend
+    // Refetch new random images from backend
     try {
       const response = await fetch('/api/random_images?count=12');
       const data = await response.json();
       
       if (data.images && data.images.length > 0) {
-        // Images are already in correct format, no need to modify
         setAllImages(data.images);
         setDemoImages(data.images.slice(0, 4));
       }
@@ -260,14 +271,12 @@ const App = () => {
               </div>
             </div>
 
-            {/* ARABIC TEXT: "أو" (OR) */}
             <div className="text-4xl font-bold mb-4">
               أو
             </div>
 
             {/* SUGGESTIONS AREA - Large Semi-transparent Box */}
             <div className="bg-white/[0.04] rounded-3xl p-8 backdrop-blur-sm border border-white/10 w-full hover:bg-white/[0.1] transition-colors">
-              {/* ARABIC TEXT: "إختار وين ودك تسافر؟" */}
               <div className="text-center mb-4">
                 <p className="text-xl font-bold mb-1">
                   اختر أكثر منظر يعجبك:
@@ -336,11 +345,18 @@ const App = () => {
         {/* VIEW: SCANNING */}
         {view === 'scanning' && (
           <div className="flex flex-col items-center justify-center min-h-screen">
-            {/* Show all selected images in a grid */}
-            <div className="mb-8">
-              <p className="text-center text-white/60 mb-4 text-sm">
-                Analyzing your preferences...
-              </p>
+            
+            {/* TEXT & SMALL IMAGE GRID */}
+            <div className="mb-8 flex flex-col items-center w-full">
+              
+              {/* BIG, SPECIAL SCANNING TEXT */}
+              <h2 
+                dir="rtl" 
+                className="text-2xl md:text-3xl font-bold mb-6 text-[#FB7252] animate-pulse drop-shadow-[0_0_15px_rgba(251,114,82,0.4)]"
+              >
+                جاري تحليل تفضيلاتك...
+              </h2>
+              
               <div className="flex gap-2 justify-center">
                 {selectedImages.slice(0, 5).map((img, i) => (
                   <div key={i} className="w-16 h-16 rounded-lg overflow-hidden border border-[#FB7252]/30">
@@ -372,9 +388,6 @@ const App = () => {
 
             </div>
 
-            <p className="mt-10 font-mono text-[#FB7252] text-sm animate-pulse tracking-widest">
-              BUILDING PREFERENCE PROFILE...
-            </p>
             <style>{`
               @keyframes scan {
                 0%, 100% { top: 0%; opacity: 1; }
@@ -386,46 +399,44 @@ const App = () => {
 
         {/* VIEW: RESULTS */}
         {view === 'results' && (
-          /* Reduced top padding (pt-4) to pull everything up! */
           <div className="min-h-screen pt-4 md:pt-10 px-6 md:px-12 max-w-6xl mx-auto flex flex-col">
             
-            {/* 1. BRANDING: Logo Centered */}
+            {/* 1. Logo Centered */}
             <div className="mb-4 flex justify-center opacity-90 pointer-events-none">
-              {/* scale-90 keeps it slightly smaller than the home page without making it tiny */}
               <div className="scale-90">
                 <LogoSVG />
               </div>
             </div>
 
-            {/* 2. NAVIGATION: Back Button (Centered on mobile, left on desktop) */}
+            {/* 2. Back Button */}
             <div className="mb-8 flex justify-center md:justify-start">
               <button 
                 onClick={resetSelection} 
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/20 text-white/80 hover:bg-white/10 hover:text-white uppercase tracking-widest text-sm font-bold transition-all duration-300"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/20 hover:text-white font-bold transition-all duration-300 text-xs"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Find Another Place
+                البحث عن مكان آخر
               </button>
             </div>
 
             {/* 3. PAGE TITLE */}
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#FB7252]">
-              Your Perfect Matches
-            </h2>
-            <p className="text-white/60 mb-10 text-sm">
-              Based on your preferences, you'll love these places:
-            </p>
+            <div dir="rtl" className="text-center md:text-right">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#FB7252]">
+                أفضل الوجهات لك
+              </h2>
+              <p className="text-white/60 mb-10 text-sm">
+                بناءً على تفضيلاتك، ستحب هذه الأماكن:
+              </p>
+            </div>
 
-            {/* RESULTS GRID ... (keep your existing results.map block here!) ... */}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
+            {/* RESULTS GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20" dir="rtl">
               {results.length > 0 ? results.map((item) => (
                 <div 
                   key={item.id} 
-                  // Reverted to the glassy background you originally liked!
-                  className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#FB7252]/50 transition-all duration-500 group flex flex-col"
+                  className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:-translate-y-2 hover:border-[#FB7252]/50 transition-all duration-500 group flex flex-col text-right"
                 >
                   {/* 1. IMAGE SECTION */}
                   <div className="h-64 overflow-hidden relative">
@@ -439,53 +450,50 @@ const App = () => {
 
                   {/* 2. INFO SECTION */}
                   <div className="p-6 flex-grow flex flex-col justify-between">
-                    <h3 className="text-xl font-bold mb-4">{item.name}</h3>
                     
-                    {/* mt-auto pushes this entire block to the bottom of the card */}
+                    {/* 2.2.Centered Name */}
+                    <h3 className="text-xl font-bold mb-4 text-center">{item.name}</h3>
+                    
                     <div className="mt-auto">
                       
-                      <p className="text-white/60 text-[10px] mb-3 uppercase tracking-widest font-bold">
-                        Why it's a match:
+                      {/* 2.3. What makes it special for you? */}
+                      <p className="text-white/70 text-sm mb-3 font-bold">
+                       ما يجعله مميزًا بالنسبة لك؟
                       </p>
                       
-                      {/* 
-                          RESPONSIVE LAYOUT: 
-                          Mobile -> flex-col (Stacked vertically)
-                          Desktop -> sm:flex-row sm:flex-nowrap (Side-by-side, locked in place) 
-                      */}
                       <div className="flex flex-col sm:flex-row sm:flex-nowrap justify-between items-start sm:items-end gap-4 w-full">
                         
-                        {/* LEFT COLUMN: TAGS */}
+                        {/* 2.4. TAGS */}
                         <div className="flex flex-wrap gap-2 w-full sm:w-auto flex-grow">
                           {item.matchReason
                             .split(',')
-                            // NEW: Filter out "General" before rendering
                             .filter(tag => tag.trim() !== 'General') 
-                            .map((tag, index) => (
-                              <span 
-                                key={index}
-                                className="flex items-center px-3 py-2 rounded-lg border border-[#FB7252]/40 text-[10px] uppercase font-bold tracking-wider bg-[#FB7252]/10 text-[#FB7252]"
-                              >
-                                {tag.replace(/_/g, ' ')}
-                              </span>
-                          ))}
+                            .map((tag, index) => {
+                              const cleanTag = tag.replace(/_/g, ' ').trim();
+                              const translatedTag = arabicTags[cleanTag] || cleanTag; 
+
+                              return (
+                                <span 
+                                  key={index}
+                                  className="flex items-center px-3 py-2 rounded-lg border border-[#FB7252]/40 text-[10px] font-bold bg-[#FB7252]/10 text-[#FB7252]"
+                                >
+                                  {translatedTag}
+                                </span>
+                              );
+                            })}
                         </div>
 
-                        {/* RIGHT COLUMN: GOOGLE MAPS BUTTON */}
+                        {/* 2.5.GOOGLE MAPS BUTTON */}
                         <a 
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          /* 
-                             Mobile -> w-full (Big, easy-to-tap button at the bottom)
-                             Desktop -> sm:w-auto (Shrinks to fit content, locked to the right) 
-                          */
                           className="w-full sm:w-auto shrink-0 whitespace-nowrap flex justify-center items-center gap-1.5 py-2 px-3 rounded-lg border border-white/20 text-xs font-bold text-white hover:bg-white hover:text-black transition-colors"
                         >
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                           </svg>
-                          Google Maps
+                          خرائط جوجل
                         </a>
 
                       </div>
@@ -493,7 +501,7 @@ const App = () => {
                   </div>
                 </div>
               )) : (
-                <div className="col-span-3 text-center text-white/40 py-20">No matches found.</div>
+                <div className="col-span-3 text-center text-white/40 py-20">لم يتم العثور على نتائج.</div>
               )}
             </div>
           </div>
@@ -504,10 +512,7 @@ const App = () => {
   );
 };
 
-//--------------------------------------------------------------------------------
-// [] Design a logo
-// PLACEHOLDER: ViewFinder Logo SVG
-// UPDATE: Removed the 30px of invisible empty space at the bottom of the canvas
+// Logo
 const LogoSVG = () => (
   <svg width="280" height="50" viewBox="0 0 280 50" fill="none" xmlns="http://www.w3.org/2000/svg">
     <text 
@@ -525,7 +530,7 @@ const LogoSVG = () => (
   </svg>
 );
 
-// PLACEHOLDER: Upload Button SVG (with embedded Arabic text)
+// Upload Button
 const UploadButtonSVG = () => (
   <svg width="200" height="140" viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* Upload Icon Circle */}
@@ -543,7 +548,7 @@ const UploadButtonSVG = () => (
       />
     </g>
 
-    {/* Arabic Text: "إرفق صورة" */}
+    {/* Upload Text */}
     <text 
       x="100" 
       y="115" 

@@ -17,7 +17,6 @@
     font-family: 'Baloo Bhaijaan 2', 'Arial', sans-serif;
   }
 
-  /* Ensure proper RTL text rendering for Arabic */
   [dir="rtl"], 
   .rtl {
     direction: rtl;

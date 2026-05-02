@@ -1,5 +1,5 @@
 import ssl
-# BYPASS SSL VERIFICATION (Fix for Mac)
+# BYPASS SSL VERIFICATION (For Mac)
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -23,12 +23,11 @@ from io import BytesIO
 
 # --- CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_PATH = os.path.join(BASE_DIR, "data")       # .npy / .pkl files live here
-IMAGES_PATH  = os.path.join(BASE_DIR, "datasets")   # actual image files are here
+DATASET_PATH = os.path.join(BASE_DIR, "data")       # For .npy / .pkl files
+IMAGES_PATH  = os.path.join(BASE_DIR, "datasets")   # For actual image files
 
 app = FastAPI(title="ViewFinder API")
 
-# This is what lets the frontend actually display result images.
 if os.path.exists(IMAGES_PATH):
     app.mount("/static", StaticFiles(directory=IMAGES_PATH), name="static")
 else:
@@ -166,8 +165,7 @@ environment_map = {
     "Machu_Picchu": "Hilltop", "Christ_the_Redeemer": "Hilltop",
     "Neuschwanstein_Castle": "Hilltop", "Acropolis_of_Athens": "Hilltop",
     "Great_Wall_of_China": "Hilltop", "Tian_Tan_Buddha": "Hilltop",
-    "Petra": "Hilltop", "Burj_Khalifa": "Hilltop",
-    "Times_Square": "Urban", "Eiffel_Tower": "Urban",
+    "Petra": "Hilltop", "Times_Square": "Urban", "Eiffel_Tower": "Urban",
     "Tokyo_Tower": "Urban", "Arc_de_Triomphe": "Urban",
     "Brandenburg_Gate": "Urban", "Milan_Cathedral": "Urban",
     "Le_Centre_Pompidou": "Urban", "Empire_State_Building": "Urban",
@@ -336,20 +334,20 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
              "matchReason": "No Data Loaded", "image": "https://via.placeholder.com/400"}
         ]}
 
-    # Find the #1 closest DB match for each selected image, and BAN those from the final results.
+    # 3. Find the #1 closest DB match for each selected image, and BAN those from the final results.
     _, input_indices = knn.kneighbors(feature_vectors_batch, n_neighbors=1)
     
-    # Create a set of the names the user inputted, to ban them from the output
+    # 3.2. Create a set of the names the user inputted, to ban them from the output
     banned_names = {labels[idx[0]] for idx in input_indices}
     print(f"🚫 Banning inputs from results: {banned_names}")
 
-    # 3. KNN lookup on the averaged "preference profile"
+    # 4. KNN lookup on the averaged "preference profile"
     distances, indices = knn.kneighbors(avg_vector)
 
-    # 4. Build deduplicated results
+    # 5. Build deduplicated results
     results = []
     
-    # Initialize 'seen' list with the 'banned' list. 
+    # 6. Initialize 'seen' list with the 'banned' list. 
     seen_names = set(banned_names) 
 
     for i in range(len(indices[0])):
@@ -380,7 +378,7 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
             "id": int(idx),
             "name": name.replace("_", " ").replace("Musee dOrsay", "Musée d'Orsay").replace("dOrsay", "d'Orsay"),
             "similarity": round(float(raw_sim), 1),
-            "confidenceLabel": confidence_label,        #Pass the semantic label to React
+            "confidenceLabel": confidence_label,
             "matchType": "visual",
             "matchReason": f"{cat},{env}",
             "image": f"/static/{rel_path}"
