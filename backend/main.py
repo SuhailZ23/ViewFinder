@@ -10,6 +10,7 @@ else:
 import os
 import numpy as np
 import pickle
+import random
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -36,7 +37,10 @@ else:
 # --- CORS MIDDLEWARE ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173", # For local testing
+        "https://your-viewfinder-app.netlify.app" # Allow Netlify
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -390,6 +394,28 @@ async def analyze_multiple_images(files: list[UploadFile] = File(...)):
 
     return {"results": results}
 
+
+@app.get("/random_images")
+def get_random_images(count: int = 12):
+    """
+    Returns a list of random image URLs from the dataset for the frontend demo grid.
+    """
+    if image_paths is None or len(image_paths) == 0:
+        # Fallback if no dataset is loaded
+        return {"images": [f"https://via.placeholder.com/400?text=Image+{i}" for i in range(count)]}
+    
+    # Pick random indices
+    random_indices = random.sample(range(len(image_paths)), min(count, len(image_paths)))
+    
+    # Convert paths to URLs
+    random_urls = []
+    for idx in random_indices:
+        rel_path = os.path.relpath(image_paths[idx], IMAGES_PATH)
+        # Format as /static/path/to/image.jpg
+        url = f"/static/{rel_path}"
+        random_urls.append(url)
+        
+    return {"images": random_urls}
 
 @app.get("/")
 def home():

@@ -118,7 +118,7 @@ const App = () => {
     }
 
     try {
-      const response = await fetch('/api/analyze_multiple', {
+      const response = await fetch('https://viewfinder-4dhm.onrender.com/analyze_multiple', {
         method: 'POST',
         body: formData
       });
@@ -188,15 +188,20 @@ const App = () => {
     setSelectedCount(0);
     setView('home');
     setFadingOut(null);
+    setScanIndex(0); // Also reset the scanner timer
     
-    // Refetch new random images from backend
+    // Refetch new random images from the live backend
     try {
-      const response = await fetch('/api/random_images?count=12');
+      // URL received from Render
+      const response = await fetch('https://viewfinder-4dhm.onrender.com/random_images?count=12');
       const data = await response.json();
       
       if (data.images && data.images.length > 0) {
-        setAllImages(data.images);
-        setDemoImages(data.images.slice(0, 4));
+        // Append the Render domain
+        const fullUrls = data.images.map(path => `https://viewfinder-4dhm.onrender.com${path}`);
+        
+        setAllImages(fullUrls);
+        setDemoImages(fullUrls.slice(0, 4));
       }
     } catch (error) {
       console.error("Error re-fetching demo images:", error);
