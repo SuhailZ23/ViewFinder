@@ -1,3 +1,8 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Tell TF to stop looking for GPUs completely
+os.environ["TF_NUM_INTRAOP_THREADS"] = "1" # Limit CPU threads to save memory
+os.environ["TF_NUM_INTEROP_THREADS"] = "1"
+
 import ssl
 # BYPASS SSL VERIFICATION (For Mac)
 try:
@@ -7,7 +12,6 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
-import os
 import numpy as np
 import pickle
 import random
