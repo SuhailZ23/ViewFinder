@@ -118,7 +118,7 @@ const App = () => {
     }
 
     try {
-      const response = await fetch('https://viewfinder-4dhm.onrender.com/analyze_multiple', {
+      const response = await fetch('https://suhailoh-viewfinder-api.hf.space/analyze_multiple', {
         method: 'POST',
         body: formData
       });
@@ -193,12 +193,12 @@ const App = () => {
     // Refetch new random images from the live backend
     try {
       // URL received from Render
-      const response = await fetch('https://viewfinder-4dhm.onrender.com/random_images?count=12');
+      const response = await fetch('https://suhailoh-viewfinder-api.hf.space/random_images?count=12');
       const data = await response.json();
       
       if (data.images && data.images.length > 0) {
         // Append the Render domain
-        const fullUrls = data.images.map(path => `https://viewfinder-4dhm.onrender.com${path}`);
+        const fullUrls = data.images.map(path => `https://suhailoh-viewfinder-api.hf.space${path}`);
         
         setAllImages(fullUrls);
         setDemoImages(fullUrls.slice(0, 4));
