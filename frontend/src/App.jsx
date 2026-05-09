@@ -126,34 +126,27 @@ const App = () => {
       const data = await response.json();
 
       if (data.results) {
-        // Fetch real-world photos from Wikipedia for the predicted places!
-        const fixedResults = await Promise.all(data.results.map(async item => {
-          let realImageUrl = item.image.startsWith('http') ? item.image : `https://suhailoh-viewfinder-api.hf.space${item.image}`;
+        const fixedResults = data.results.map(item => {
+          // 1. Convert spaces back to underscores to match your files
+          let fileName = item.name.replace(/ /g, '_');
           
-          try {
-            // Ask Wikipedia for the official photo of this landmark
-            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item.name)}`);
-            const wikiData = await wikiRes.json();
-            
-            // Prefer the high-res original image, fallback to thumbnail
-            if (wikiData.originalimage && wikiData.originalimage.source) {
-              realImageUrl = wikiData.originalimage.source; 
-            } else if (wikiData.thumbnail && wikiData.thumbnail.source) {
-              realImageUrl = wikiData.thumbnail.source; 
-            }
-          } catch (error) {
-            console.error("Wikipedia image fetch failed for", item.name);
+          // 2. Handle the specific tricky names from your dataset
+          if (item.name.includes("Orsay")) {
+            fileName = "Musee_dOrsay";
+          } else if (fileName.toLowerCase() === "statue_of_liberty") {
+            fileName = "statue_of_liberty";
           }
-
+          
           return {
             ...item,
-            image: realImageUrl // Override with the beautiful Wikipedia photo!
+            image: `/places/${encodeURIComponent(fileName)}.jpg`
           };
-        }));
+        });
         
         setResults(fixedResults);
         setTimeout(() => setView('results'), 2500);
       }
+      
     } catch (error) {
       console.error("API Error:", error);
       alert("Could not connect to ViewFinder. Is Docker running?");
