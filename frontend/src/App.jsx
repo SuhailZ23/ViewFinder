@@ -146,7 +146,7 @@ const App = () => {
         setResults(fixedResults);
         setTimeout(() => setView('results'), 2500);
       }
-      
+
     } catch (error) {
       console.error("API Error:", error);
       alert("Could not connect to ViewFinder. Is Docker running?");
@@ -159,6 +159,9 @@ const App = () => {
 
   // Handle demo image click with fade-out
   const handleDemoClick = async (clickedImg, index) => {
+    // Stop double-clicks and fast clicking
+    if (fadingOut !== null || selectedImages.includes(clickedImg)) return;
+
     // Start fade-out animation
     setFadingOut(index);
 
@@ -197,29 +200,17 @@ const App = () => {
   };
 
   // Reset selection
-  const resetSelection = async () => {
+  const resetSelection = () => {
     setSelectedImages([]);
     setSelectedCount(0);
     setView('home');
     setFadingOut(null);
     setScanIndex(0); // Also reset the scanner timer
     
-    // Refetch new random images from the live backend
-    try {
-      // URL received from Render
-      const response = await fetch('https://suhailoh-viewfinder-api.hf.space/random_images?count=12');
-      const data = await response.json();
-      
-      if (data.images && data.images.length > 0) {
-        // Append the Render domain
-        const fullUrls = data.images.map(path => `https://suhailoh-viewfinder-api.hf.space${path}`);
-        
-        setAllImages(fullUrls);
-        setDemoImages(fullUrls.slice(0, 4));
-      }
-    } catch (error) {
-      console.error("Error re-fetching demo images:", error);
-    }
+    // Simply re-shuffle your 50 local images instead of asking the backend!
+    const shuffled = [...handPickedImages].sort(() => 0.5 - Math.random());
+    setAllImages(shuffled);
+    setDemoImages(shuffled.slice(0, 4));
   };
 
   return (
@@ -343,12 +334,14 @@ const App = () => {
                 {demoImages.map((img, i) => (
                   <div
                     key={i}
+                    // pointer-events-none so it can't be clicked while invisible
                     className={`aspect-square bg-white/5 rounded-3xl overflow-hidden border-4 border-white/80 cursor-pointer hover:scale-105 hover:border-[#FB7252] shadow-lg transition-all duration-300 ${
-                      fadingOut === i ? 'opacity-0' : 'opacity-100'
+                      fadingOut === i ? 'opacity-0 pointer-events-none' : 'opacity-100'
                     }`}
                     onClick={() => handleDemoClick(img, i)}
                   >
                     <img 
+                      key={img} // drop the old photo instantly
                       src={img} 
                       className="w-full h-full object-cover" 
                       alt={`Destination ${i + 1}`}
