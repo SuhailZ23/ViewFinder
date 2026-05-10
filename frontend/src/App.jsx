@@ -292,7 +292,7 @@ const App = () => {
                   اختر أكثر منظر يعجبك:
                 </p>
                 <p className="text-sm text-white/60 font-bold">
-                  اختر 5 أماكن أو أكثر لنتيجة أفضل: {selectedCount}/5
+                  اختر 5 أماكن لنتيجة أفضل: {selectedCount}/5
                 </p>
               </div>
 
@@ -429,7 +429,7 @@ const App = () => {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                البحث عن مكان آخر
+                ابحث عن مكان آخر
               </button>
             </div>
 
