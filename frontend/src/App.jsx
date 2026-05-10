@@ -214,7 +214,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white font-sans relative overflow-x-hidden">
       {/* ANIMATED BACKGROUND GRID - 3 Columns with Infinite Loop */}
       <div className="fixed inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-black/ z-10"></div>
@@ -248,7 +248,7 @@ const App = () => {
       </div>
 
       {/* OUTER WHITE BORDER FRAME */}
-      <div className="fixed inset-0 pointer-events-none z-50">
+      <div className="absolute inset-0 pointer-events-none z-50">
         <div className="absolute inset-0 border-2 border-white/30"></div>
       </div>
 
@@ -518,6 +518,31 @@ const App = () => {
             </div>
           </div>
         )}
+
+        {/* FOOTER SIGNATURE */}
+        <div className="mt-16 pb-8 flex flex-col items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300">
+          <p className="text-sm text-white/70 font-bold mb-2">
+            Made by Suhail
+          </p>
+          <div className="flex gap-6 text-xs font-bold">
+            <a 
+              href="https://github.com/SuhailZ23/ViewFinder" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[#FB7252] hover:text-white transition-colors"
+            >
+              GitHub
+            </a>
+            <a 
+              href="https://www.linkedin.com/in/suhail-a-alzahrani/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[#FB7252] hover:text-white transition-colors"
+            >
+              LinkedIn
+            </a>
+          </div>
+        </div>
 
       </div>
     </div>
